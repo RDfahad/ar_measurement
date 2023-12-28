@@ -119,6 +119,7 @@ class _AppStartState extends State<AppStart> {
       ],
     );
 
+
     node = ARKitNode(
       geometry: plane,
       position: vector.Vector3(anchor.center.x, 0, anchor.center.z),
