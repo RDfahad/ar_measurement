@@ -85,7 +85,10 @@ class _AppStartState extends State<AppStart> {
             child: Container(
               width: 5,
               height: 5,
-              color: Colors.white,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle
+              ),
             ),
           ):Container(),
           GestureDetector(
@@ -139,7 +142,7 @@ class _AppStartState extends State<AppStart> {
         // _onButtonTap();
         // log(planeTap.worldTransform.toString());
 
-        log(planeTap.distance.toString());
+        log(planeTap.worldTransform.toString());
         _onPlaneTapHandler(planeTap.worldTransform);
       }
     };
@@ -180,6 +183,9 @@ class _AppStartState extends State<AppStart> {
       ],
     );
 
+    // arkitController.onNodePan = (List<ARKitNodePanResult> nodePans){
+    //   print('asdnjasbds');
+    // };
 
     node = ARKitNode(
       geometry: plane,
@@ -246,7 +252,7 @@ class _AppStartState extends State<AppStart> {
   }
 
   void _onPlaneTapHandler(Matrix4 transform) async {
-    var cameraPosition = await arkitController.cameraPosition();
+    // var cameraPosition = await arkitController.cameraPosition();
     final position = vector.Vector3(
       transform.getColumn(3).x,
       transform.getColumn(3).y,
@@ -257,7 +263,7 @@ class _AppStartState extends State<AppStart> {
       diffuse: ARKitMaterialProperty.color(Colors.white),
     );
     final sphere = ARKitSphere(
-      radius: 0.007,
+      radius: 0.004,
       materials: [material],
     );
     final node = ARKitNode(
