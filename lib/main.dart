@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
@@ -61,7 +62,28 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: WidgetProjectionPage(),
+      home: Scaffold(
+        body: AppStart(),
+        // body: GestureDetector(
+        //   onPanStart: (details){
+        //     print('start');
+        //   },
+        //   // onPanUpdate: (details){
+        //   //   print('updating');
+        //   // },
+        //   onLongPressStart: (details){
+        //     Timer.periodic(Duration(milliseconds: 50), (timer) {
+        //       print('longg press');
+        //     });
+        //   },
+        //   child: Container(
+        //     height: 200,
+        //     width: 200,
+        //     color: Colors.red,
+        //     padding: EdgeInsets.all(100),
+        //   ),
+        // ),
+      ),
     );
   }
 }

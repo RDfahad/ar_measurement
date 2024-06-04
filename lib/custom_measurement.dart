@@ -1,7 +1,9 @@
 import 'dart:developer';
 
 import 'package:arkit_plugin/arkit_plugin.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 import 'dart:math' as math;
 
@@ -20,8 +22,10 @@ class _AppStartState extends State<AppStart> {
   ARKitNode? node;
   String? anchorId;
   vector.Vector3? lastPosition;
+  vector.Vector3? firstPosition;
   bool isCreated = false;
   List<ARKitNode> addedNodes = [];
+  double totalDistance = 0;
 
   @override
   void dispose() {
@@ -35,9 +39,10 @@ class _AppStartState extends State<AppStart> {
     body: Container(
       child: Stack(
         children: [
+
           ARKitSceneView(
-            showFeaturePoints: false,
-            planeDetection: ARPlaneDetection.horizontal,
+            showFeaturePoints: true,
+            planeDetection: ARPlaneDetection.horizontalAndVertical,
             onARKitViewCreated: onARKitViewCreated,
             enableTapRecognizer: true,
             forceUserTapOnCenter: true,
@@ -46,6 +51,15 @@ class _AppStartState extends State<AppStart> {
             // showWorldOrigin: true,
             // worldAlignment: ARWorldAlignment.camera,
             // forceUserTapOnCenter: true,
+          ),
+          Container(
+            color: Colors.white,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height* 0.1,
+            alignment: Alignment.bottomCenter,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Text(totalDistance.toStringAsFixed(2) + ' cm'),),
           ),
           isCreated ? Center(
             child: Container(
@@ -64,7 +78,12 @@ class _AppStartState extends State<AppStart> {
                 arkitController.remove(node.name);
               }
               lastPosition = null;
+              totalDistance = 0;
               addedNodes.clear();
+              firstPosition = null;
+              setState(() {
+
+              });
             },
             child: Align(
               alignment: Alignment.bottomCenter,
@@ -91,7 +110,7 @@ class _AppStartState extends State<AppStart> {
     this.arkitController = arkitController;
     this.arkitController.onAddNodeForAnchor = _handleAddAnchor;
     this.arkitController.onUpdateNodeForAnchor = _handleUpdateAnchor;
-    this.arkitController.addCoachingOverlay(CoachingOverlayGoal.horizontalPlane);
+    this.arkitController.addCoachingOverlay(CoachingOverlayGoal.anyPlane);
     this.arkitController.onCameraDidChangeTrackingState = (arTrackingState, arTrackingStateReason)async{
       if(arTrackingState == ARTrackingState.normal){
         // var testResult = await this.arkitController.performHitTest(x: 1, y: 1);
@@ -102,7 +121,7 @@ class _AppStartState extends State<AppStart> {
     };
     this.arkitController.onARTap = (List<ARKitTestResult> ar) {
       final planeTap = ar.firstWhere(
-            (tap) => tap.type == ARKitHitTestResultType.existingPlaneUsingExtent,
+            (tap) => tap.type == ARKitHitTestResultType.featurePoint,
       );
       if (planeTap != null) {
         // _onButtonTap();
@@ -218,12 +237,34 @@ class _AppStartState extends State<AppStart> {
   }
 
   void _onPlaneTapHandler(Matrix4 transform) async {
+    // this.arkitController.performHitTest(x: MediaQuery.of(context).size.width /2, y: MediaQuery.of(context).size.height /2).then((value) {
+    //   print('hittsssss');
+    //   print(value.firstOrNull);
+    //   final planeTap = value.firstWhere(
+    //         (tap) => tap.type == ARKitHitTestResultType.existingPlane,
+    //   );
+    //   if (planeTap != null) {
+    //     // _onButtonTap();
+    //     // log(planeTap.worldTransform.toString());
+    //
+    //     log(planeTap.worldTransform.toString());
+    //     // _onPlaneTapHandler(planeTap.worldTransform);
+    //   }
+    // });
     // var cameraPosition = await arkitController.cameraPosition();
-    final position = vector.Vector3(
+    var position = vector.Vector3(
       transform.getColumn(3).x,
       transform.getColumn(3).y,
       transform.getColumn(3).z,
     );
+    String? firstPositionDistance;
+    if(firstPosition != null) {
+      firstPositionDistance = _calculateDistanceBetweenPoints(
+          position, firstPosition!);
+      if(double.parse(firstPositionDistance) <= 1){
+        position = firstPosition!;
+      }
+    }
     final material = ARKitMaterial(
       lightingModelName: ARKitLightingModel.constant,
       diffuse: ARKitMaterialProperty.color(Colors.white),
@@ -249,10 +290,28 @@ class _AppStartState extends State<AppStart> {
       addedNodes.add(lineNode);
 
       final distance = _calculateDistanceBetweenPoints(position, lastPosition!);
-      final point = _getMiddleVector(position, lastPosition!);
-      _drawText(distance, point);
+      // final point = _getMiddleVector(position, lastPosition!);
+      setState(() {
+        totalDistance += double.parse(distance);
+      });
+      // if(double.parse(distance) <= 0.100){
+      //   lastPosition = firstPosition;
+      // }
+      // else{
+        lastPosition = position;
+      // }
+      // if(firstPosition == null){
+      //   firstPosition = position;
+      // }
+      // _drawText(distance, point);
+    }else{
+      lastPosition = position;
+      if(firstPosition == null){
+        firstPosition = position;
+      }
     }
-    lastPosition = position;
+
+
   }
 
   // void _handleButtonTap() async {
@@ -298,7 +357,7 @@ class _AppStartState extends State<AppStart> {
 
   String _calculateDistanceBetweenPoints(vector.Vector3 A, vector.Vector3 B) {
     final length = A.distanceTo(B);
-    return '${(length * 100).toStringAsFixed(2)} cm';
+    return '${(length * 100).toStringAsFixed(2)}';
   }
 
   vector.Vector3 _getMiddleVector(vector.Vector3 A, vector.Vector3 B) {
